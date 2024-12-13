@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 
 import { Button } from "./ui/button";
-import { Plus, Table2, Trash } from "lucide-react";
+import { Grip, Plus, Table2, Trash } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -50,6 +50,7 @@ import { useEffect, useState } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { columnTypes } from "@/lib/columns";
+import { Reorder } from "motion/react";
 
 const formSchema = z.object({
   name: z
@@ -140,7 +141,9 @@ export default function CreateTableDialog() {
     return () => unsubscribe();
   }, [diagram, form]);
 
-  const { fields, append, remove } = useFieldArray({
+  const [activeDrag, setActiveDrag] = useState(-1);
+
+  const { fields, append, remove, move } = useFieldArray({
     control: form.control,
     name: "columns",
   });
@@ -286,6 +289,7 @@ export default function CreateTableDialog() {
                   </TableCaption>
                   <TableHeader>
                     <TableRow>
+                      <TableHead></TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead className="text-center">PK</TableHead>
@@ -294,9 +298,32 @@ export default function CreateTableDialog() {
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <Reorder.Group
+                    as="tbody"
+                    values={fields}
+                    onReorder={(e) => {
+                      e.map((item, index) => {
+                        const activeElement = fields[activeDrag];
+                        if (activeElement && item === activeElement) {
+                          move(activeDrag, index);
+                        }
+                      });
+                    }}
+                  >
                     {fields.map((field, index) => (
-                      <TableRow key={field.id}>
+                      <Reorder.Item
+                        key={field.id}
+                        as="tr"
+                        value={field}
+                        id={field.id}
+                        onDragStart={() => {
+                          setActiveDrag(index);
+                        }}
+                        className="bg-zinc-950"
+                      >
+                        <TableCell>
+                          <Grip className="size-4" />
+                        </TableCell>
                         <TableCell>
                           <FormField
                             control={form.control}
@@ -400,9 +427,9 @@ export default function CreateTableDialog() {
                             <Trash />
                           </Button>
                         </TableCell>
-                      </TableRow>
+                      </Reorder.Item>
                     ))}
-                  </TableBody>
+                  </Reorder.Group>
                 </Table>
               </div>
 

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 
 import { Button } from "./ui/button";
-import { Plus, Trash } from "lucide-react";
+import { Grip, Plus, Trash } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +51,7 @@ import useDialog from "@/hooks/useDialog";
 import { useEffect, useState } from "react";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { columnTypes } from "@/lib/columns";
+import { Reorder } from "motion/react";
 
 const formSchema = z.object({
   name: z
@@ -159,7 +160,9 @@ export default function EditTableForm() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableName, getTable, open]);
 
-  const { fields, append, remove } = useFieldArray({
+  const [activeDrag, setActiveDrag] = useState(-1);
+
+  const { fields, append, remove, move } = useFieldArray({
     control: form.control,
     name: "columns",
   });
@@ -244,7 +247,7 @@ export default function EditTableForm() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="flex max-h-full p-0 sm:max-h-[90%]">
+      <DialogContent className="flex max-h-full max-w-xl p-0 sm:max-h-[90%]">
         <ScrollArea className="w-full overflow-y-auto p-6">
           <DialogHeader className="py-4">
             <DialogTitle>Edit Table</DialogTitle>
@@ -312,6 +315,7 @@ export default function EditTableForm() {
                   </TableCaption>
                   <TableHeader>
                     <TableRow>
+                      <TableHead></TableHead>
                       <TableHead>Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead className="text-center">PK</TableHead>
@@ -320,9 +324,32 @@ export default function EditTableForm() {
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
+                  <Reorder.Group
+                    as="tbody"
+                    values={fields}
+                    onReorder={(e) => {
+                      e.map((item, index) => {
+                        const activeElement = fields[activeDrag];
+                        if (activeElement && item === activeElement) {
+                          move(activeDrag, index);
+                        }
+                      });
+                    }}
+                  >
                     {fields.map((field, index) => (
-                      <TableRow key={field.id}>
+                      <Reorder.Item
+                        key={field.id}
+                        as="tr"
+                        value={field}
+                        id={field.id}
+                        onDragStart={() => {
+                          setActiveDrag(index);
+                        }}
+                        className="bg-zinc-950"
+                      >
+                        <TableCell>
+                          <Grip className="size-4" />
+                        </TableCell>
                         <TableCell>
                           <FormField
                             control={form.control}
@@ -426,9 +453,9 @@ export default function EditTableForm() {
                             <Trash />
                           </Button>
                         </TableCell>
-                      </TableRow>
+                      </Reorder.Item>
                     ))}
-                  </TableBody>
+                  </Reorder.Group>
                 </Table>
               </div>
 
