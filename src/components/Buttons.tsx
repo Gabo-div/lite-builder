@@ -1,7 +1,6 @@
 import { Button } from "./ui/button";
-import { LayoutDashboard, Minus, Plus, Scan } from "lucide-react";
+import { LayoutDashboard, Minus, Plus, Scan, Table2 } from "lucide-react";
 import { Separator } from "./ui/separator";
-import CreateTableDialog from "./CreateTableDialog";
 import { InfoPopover } from "./InfoPopover";
 import OptionsDropdown from "./OptionsDropdown";
 
@@ -10,8 +9,10 @@ import { useShallow } from "zustand/react/shallow";
 import { useAppStore } from "@/stores/appStore";
 import { useState } from "react";
 import useDiagram from "@/hooks/useDiagram";
+import { Dialogs, useDialogStore } from "@/stores/dialogStore";
 
 export default function Buttons() {
+  const setOpenDialog = useDialogStore((state) => state.setDialogOpen);
   const { fitView, zoomIn, zoomOut, zoomTo } = useReactFlow();
   const { onLayout } = useDiagram();
 
@@ -48,7 +49,13 @@ export default function Buttons() {
         <div className="pointer-events-auto flex flex-col gap-2 rounded-md bg-zinc-900 p-1">
           <InfoPopover />
           <Separator />
-          <CreateTableDialog />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpenDialog(Dialogs.CreateTable)}
+          >
+            <Table2 />
+          </Button>
           <Separator />
           <Button variant="ghost" size="icon" onClick={onLayout}>
             <LayoutDashboard />

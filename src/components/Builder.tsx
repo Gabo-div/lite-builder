@@ -9,6 +9,7 @@ import Welcome from "./Welcome";
 import Buttons from "./Buttons";
 import OpenDiagramDialog from "./OpenDiagramDialog";
 import ExportImageDialog from "./ExportImageDialog";
+import CreateTableDialog from "./CreateTableDialog";
 
 export default function Builder() {
   const { nodeTypes, nodes, edges, onEdgesChange, onNodesChange } =
@@ -34,6 +35,7 @@ export default function Builder() {
       <Welcome />
       <Buttons />
 
+      <CreateTableDialog />
       <EditTableDialog />
       <OpenDiagramDialog />
       <ExportImageDialog />

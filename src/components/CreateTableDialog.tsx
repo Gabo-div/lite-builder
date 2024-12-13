@@ -6,7 +6,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import {
@@ -28,7 +27,7 @@ import {
 } from "@/components/ui/select";
 
 import { Button } from "./ui/button";
-import { Grip, Plus, Table2, Trash } from "lucide-react";
+import { Grip, Plus, Trash } from "lucide-react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +50,8 @@ import { useShallow } from "zustand/react/shallow";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
 import { columnTypes } from "@/lib/columns";
 import { Reorder } from "motion/react";
+import useDialog from "@/hooks/useDialog";
+import { Dialogs } from "@/stores/dialogStore";
 
 const formSchema = z.object({
   name: z
@@ -83,6 +84,8 @@ const formSchema = z.object({
 });
 
 export default function CreateTableDialog() {
+  const { open, setOpen } = useDialog(Dialogs.CreateTable);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -212,15 +215,11 @@ export default function CreateTableDialog() {
     });
 
     form.reset();
+    setOpen(false);
   }
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Table2 />
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="flex max-h-full p-0 sm:max-h-[90%]">
         <ScrollArea className="w-full overflow-y-auto p-6">
           <DialogHeader className="py-4">

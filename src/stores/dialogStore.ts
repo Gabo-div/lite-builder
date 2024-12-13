@@ -4,6 +4,7 @@ export enum Dialogs {
   OpenDiagram,
   ExportImage,
   EditTable,
+  CreateTable,
 }
 
 interface DialogStore {
