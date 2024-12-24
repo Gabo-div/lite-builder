@@ -7,9 +7,11 @@ import {
 import { Button } from "./ui/button";
 import { File, Image as ImageIcon, Menu } from "lucide-react";
 import { Dialogs, useDialogStore } from "@/stores/dialogStore";
+import { useCollaborationStore } from "@/hooks/useCollaborationStore";
 
 export default function OptionsDropdown() {
   const setOpenDialog = useDialogStore((state) => state.setDialogOpen);
+  const isGuest = useCollaborationStore((state) => state.isGuest);
 
   return (
     <>
@@ -24,10 +26,15 @@ export default function OptionsDropdown() {
           sideOffset={20}
           className="bg-zinc-900 p-2"
         >
-          <DropdownMenuItem onClick={() => setOpenDialog(Dialogs.OpenDiagram)}>
-            <File />
-            Diagrams
-          </DropdownMenuItem>
+          {!isGuest ? (
+            <DropdownMenuItem
+              onClick={() => setOpenDialog(Dialogs.OpenDiagram)}
+            >
+              <File />
+              Diagrams
+            </DropdownMenuItem>
+          ) : null}
+
           <DropdownMenuItem onClick={() => setOpenDialog(Dialogs.ExportImage)}>
             <ImageIcon />
             Export as image

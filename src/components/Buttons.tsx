@@ -1,25 +1,35 @@
 import { Button } from "./ui/button";
-import { LayoutDashboard, Minus, Plus, Scan, Table2 } from "lucide-react";
+import {
+  Forward,
+  LayoutDashboard,
+  Minus,
+  Plus,
+  Scan,
+  Table2,
+} from "lucide-react";
 import { Separator } from "./ui/separator";
 import { InfoPopover } from "./InfoPopover";
 import OptionsDropdown from "./OptionsDropdown";
 
 import { useOnViewportChange, useReactFlow, Viewport } from "@xyflow/react";
-import { useShallow } from "zustand/react/shallow";
-import { useAppStore } from "@/stores/appStore";
 import { useState } from "react";
 import useDiagram from "@/hooks/useDiagram";
 import { Dialogs, useDialogStore } from "@/stores/dialogStore";
+import { cn } from "@/lib/utils";
+import { useCollaborationStore } from "@/hooks/useCollaborationStore";
+import { useShallow } from "zustand/react/shallow";
 
 export default function Buttons() {
   const setOpenDialog = useDialogStore((state) => state.setDialogOpen);
   const { fitView, zoomIn, zoomOut, zoomTo } = useReactFlow();
   const { onLayout } = useDiagram();
 
-  const { currentDiagram, diagrams } = useAppStore(
+  const { state, isGuest, mode, diagram } = useCollaborationStore(
     useShallow((s) => ({
-      currentDiagram: s.currentDiagram,
-      diagrams: s.diagrams,
+      state: s.state,
+      isGuest: s.isGuest,
+      mode: s.mode,
+      diagram: s.diagram,
     })),
   );
 
@@ -29,7 +39,7 @@ export default function Buttons() {
     onChange: (viewport: Viewport) => setZoom(viewport.zoom),
   });
 
-  if (!currentDiagram) {
+  if (!diagram) {
     return null;
   }
 
@@ -39,27 +49,47 @@ export default function Buttons() {
         <div className="pointer-events-auto rounded-md bg-zinc-900 p-1">
           <OptionsDropdown />
         </div>
+        <h1 className="pointer-events-auto text-lg font-bold">
+          {diagram.name}
+        </h1>
+        <div className="flex flex-col gap-2">
+          <div className="pointer-events-auto flex flex-col gap-2 rounded-md bg-zinc-900 p-1">
+            <InfoPopover />
+            <Separator />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpenDialog(Dialogs.CreateTable)}
+              disabled={isGuest && mode === "READ"}
+            >
+              <Table2 />
+            </Button>
+            <Separator />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onLayout}
+              disabled={isGuest && mode === "READ"}
+            >
+              <LayoutDashboard />
+            </Button>
+          </div>
 
-        {currentDiagram ? (
-          <h1 className="pointer-events-auto text-lg font-bold">
-            {diagrams[currentDiagram].name}
-          </h1>
-        ) : null}
-
-        <div className="pointer-events-auto flex flex-col gap-2 rounded-md bg-zinc-900 p-1">
-          <InfoPopover />
-          <Separator />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpenDialog(Dialogs.CreateTable)}
+          <div
+            className={cn(
+              "pointer-events-auto flex flex-col gap-2 rounded-md bg-zinc-900 p-1",
+              state === "connected" && "bg-blue-700",
+            )}
           >
-            <Table2 />
-          </Button>
-          <Separator />
-          <Button variant="ghost" size="icon" onClick={onLayout}>
-            <LayoutDashboard />
-          </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpenDialog(Dialogs.ShareDiagram)}
+              className={state === "connected" ? "hover:bg-blue-500" : ""}
+            >
+              <Forward />
+            </Button>
+          </div>
         </div>
       </div>
 

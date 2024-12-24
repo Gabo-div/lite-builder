@@ -13,10 +13,11 @@ import {
   OnEdgesChange,
   OnNodesChange,
   useEdgesState,
-  useNodesInitialized,
   useNodesState,
+  useReactFlow,
 } from "@xyflow/react";
 import { useCallback, useEffect, useMemo } from "react";
+import { useCollaborationStore } from "@/hooks/useCollaborationStore";
 
 interface DiagramContextType {
   nodeTypes: NodeTypes;
@@ -43,59 +44,64 @@ export const DiagramProvider = ({
 }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+  const { fitView } = useReactFlow();
 
-  const nodesInitialized = useNodesInitialized();
+  const { setTablePosition } = useAppStore(
+    useShallow((s) => ({
+      setTablePosition: s.setTablePosition,
+    })),
+  );
+
+  const diagram = useCollaborationStore((s) => s.diagram);
 
   const onLayout = useCallback(() => {
     const layouted = getLayoutedElements(nodes, edges, "LR");
 
+    layouted.nodes.forEach((node) => {
+      setTablePosition(node.id, node.position);
+    });
+
     setNodes([...layouted.nodes]);
     setEdges([...layouted.edges]);
+
+    window.requestAnimationFrame(() => fitView());
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges]);
 
-  useEffect(() => {
-    onLayout();
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodesInitialized]);
-
   const nodeTypes = useMemo(() => ({ table: NodeTable }), []);
 
-  const { currentDiagram, diagrams } = useAppStore(
-    useShallow((s) => ({
-      currentDiagram: s.currentDiagram,
-      diagrams: s.diagrams,
-    })),
-  );
-
   useEffect(() => {
-    if (!currentDiagram) {
+    if (!diagram) {
       setNodes([]);
       return;
     }
 
     const newNodes: Node[] = [];
 
-    diagrams[currentDiagram].tables.forEach((t) => {
-      newNodes.push(createTableNode(t));
+    diagram.tables.forEach((t) => {
+      const position = (diagram.positions && diagram.positions[t.name]) || {
+        x: 0,
+        y: 0,
+      };
+
+      newNodes.push(createTableNode(t, position));
     });
 
     setNodes(newNodes);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDiagram, diagrams]);
+  }, [diagram?.tables]);
 
   useEffect(() => {
-    if (!currentDiagram) {
+    if (!diagram) {
       setEdges([]);
       return;
     }
 
     const newEdges: Edge[] = [];
 
-    diagrams[currentDiagram].relations.forEach((e) => {
+    diagram.relations.forEach((e) => {
       newEdges.push(
         createRelationEdge({
           source: [e.sourceTable, e.sourceColumn],
@@ -107,7 +113,13 @@ export const DiagramProvider = ({
     setEdges(newEdges);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentDiagram, diagrams]);
+  }, [diagram?.relations]);
+
+  useEffect(() => {
+    nodes.forEach((node) => {
+      setTablePosition(node.id, node.position);
+    });
+  }, [nodes, setTablePosition]);
 
   const value = {
     nodeTypes,

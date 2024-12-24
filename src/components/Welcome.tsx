@@ -1,19 +1,13 @@
 import { File } from "lucide-react";
 import { Button } from "./ui/button";
-import { useAppStore } from "@/stores/appStore";
-import { useShallow } from "zustand/react/shallow";
 import { Dialogs, useDialogStore } from "@/stores/dialogStore";
+import { useCollaborationStore } from "@/hooks/useCollaborationStore";
 
 export default function Welcome() {
-  const { currentDiagram } = useAppStore(
-    useShallow((s) => ({
-      currentDiagram: s.currentDiagram,
-    })),
-  );
-
+  const diagram = useCollaborationStore((s) => s.diagram);
   const setOpenDialog = useDialogStore((state) => state.setDialogOpen);
 
-  if (currentDiagram) {
+  if (diagram) {
     return null;
   }
 

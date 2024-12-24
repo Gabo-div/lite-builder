@@ -1,10 +1,13 @@
 import { Table } from "@/types/Table";
 
-export const createTableNode = (table: Table) => {
+export const createTableNode = (
+  table: Table,
+  position: { x: number; y: number },
+) => {
   return {
     id: table.name,
     type: "table",
-    position: { x: 0, y: 0 },
+    position,
     data: {
       table,
     },
