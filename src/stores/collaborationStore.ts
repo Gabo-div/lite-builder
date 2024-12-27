@@ -1,4 +1,8 @@
-import { getRandomColor, getRandomUsername } from "@/lib/collaboration";
+import {
+  createSync,
+  getRandomColor,
+  getRandomUsername,
+} from "@/lib/collaboration";
 import {
   CollaborationMode,
   Cursor,
@@ -177,6 +181,16 @@ const createCollaborationStoreInternal = (
         }
       });
 
+      const { sync } = createSync<User>({
+        syncFn: (user) => {
+          connection.send({
+            type: "user",
+            user,
+          } satisfies Message);
+        },
+        updatesPerSecond: 10,
+      });
+
       store.subscribe(
         (s) => s.user,
         (user) => {
@@ -184,10 +198,7 @@ const createCollaborationStoreInternal = (
             return;
           }
 
-          connection.send({
-            type: "user",
-            user,
-          } satisfies Message);
+          sync(user);
         },
       );
     };
@@ -321,41 +332,62 @@ const createCollaborationStoreInternal = (
       },
     );
 
+    const { sync, getLastData } = createSync<{
+      users?: Record<string, User>;
+      diagram?: Diagram;
+    }>({
+      syncFn: ({ users, diagram }) => {
+        if (users && diagram) {
+          broadcast({
+            type: "sync",
+            users,
+            diagram,
+            mode: CollaborationMode.READ,
+          });
+        } else if (users) {
+          broadcast({
+            type: "syncUsers",
+            users,
+          });
+        } else if (diagram) {
+          broadcast({
+            type: "syncDiagram",
+            diagram,
+          });
+        }
+      },
+      updatesPerSecond: 10,
+    });
+
+    const syncUsers = () => {
+      const { user, users, peer } = store.getState();
+
+      if (!user || !peer) {
+        return;
+      }
+
+      const newUsers = {
+        ...users,
+        [peer.id]: user,
+      };
+
+      sync({
+        ...getLastData(),
+        users: newUsers,
+      });
+    };
+
     store.subscribe(
       (s) => s.users,
-      (users) => {
-        const { user, peer } = store.getState();
-
-        if (!user || !peer) {
-          return;
-        }
-
-        broadcast({
-          type: "syncUsers",
-          users: {
-            ...users,
-            [peer.id]: user,
-          },
-        });
+      () => {
+        syncUsers();
       },
     );
 
     store.subscribe(
       (s) => s.user,
-      (user) => {
-        const { users, peer } = store.getState();
-
-        if (!peer || !user) {
-          return;
-        }
-
-        broadcast({
-          type: "syncUsers",
-          users: {
-            ...users,
-            [peer.id]: user,
-          },
-        });
+      () => {
+        syncUsers();
       },
     );
 
@@ -376,8 +408,8 @@ const createCollaborationStoreInternal = (
           return;
         }
 
-        broadcast({
-          type: "syncDiagram",
+        sync({
+          ...getLastData(),
           diagram,
         });
       },

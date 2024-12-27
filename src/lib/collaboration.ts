@@ -27,3 +27,35 @@ export const getRandomUsername = () => {
 export const getRandomColor = () => {
   return defaultColors[Math.floor(Math.random() * defaultColors.length)];
 };
+
+export const createSync = <T>({
+  syncFn,
+  updatesPerSecond,
+}: {
+  syncFn: (data: T) => void;
+  updatesPerSecond: number;
+}) => {
+  let timer: NodeJS.Timeout | null = null;
+  let lastData: T | null = null;
+
+  const sync = (data: T) => {
+    lastData = data;
+
+    if (timer) {
+      return;
+    }
+
+    timer = setTimeout(() => {
+      if (lastData) {
+        syncFn(lastData);
+      }
+
+      timer = null;
+      lastData = null
+    }, 1000 / updatesPerSecond);
+  };
+
+  const getLastData = () => lastData;
+
+  return { sync, getLastData };
+};

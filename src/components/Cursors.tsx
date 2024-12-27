@@ -46,7 +46,7 @@ export default function Cursors() {
       {cursors.map((cursor, i) => (
         <div
           key={i}
-          className="flex w-40 items-center space-x-1"
+          className="flex w-40 items-center space-x-1 transition-all duration-100"
           style={{
             position: "absolute",
             top: cursor.y,
