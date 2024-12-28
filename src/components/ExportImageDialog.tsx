@@ -12,17 +12,17 @@ import { Dialogs } from "@/stores/dialogStore";
 import useDialog from "@/hooks/useDialog";
 import { useEffect, useState } from "react";
 import { toPng } from "html-to-image";
-import {
-  useReactFlow,
-  getNodesBounds,
-  getViewportForBounds,
-} from "@xyflow/react";
+import { useReactFlow } from "@xyflow/react";
 import Image from "next/image";
 
 export default function ExportImageDialog() {
-  const { getNodes } = useReactFlow();
+  const { getNodes, getNodesBounds } = useReactFlow();
   const { open, setOpen } = useDialog(Dialogs.ExportImage);
-  const [imageURL, setImageURL] = useState<string | null>(null);
+  const [image, setImage] = useState<{
+    url: string;
+    width: number;
+    height: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -35,41 +35,36 @@ export default function ExportImageDialog() {
       return;
     }
 
-    const imageWidth = 1920;
-    const imageHeight = 1080;
+    const { width, height } = getNodesBounds(getNodes());
 
-    const nodesBounds = getNodesBounds(getNodes());
-    const viewport = getViewportForBounds(
-      nodesBounds,
-      imageWidth,
-      imageHeight,
-      0.5,
-      2,
-      0.1,
-    );
+    const padding = 50;
 
     toPng(element as HTMLElement, {
-      width: imageWidth,
-      height: imageHeight,
+      width: width + padding * 2,
+      height: height + padding * 2,
       style: {
-        width: imageWidth.toString(),
-        height: imageHeight.toString(),
-        transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        width: width.toString(),
+        height: height.toString(),
+        transform: `translate(${padding}px, ${padding}px)`,
       },
     }).then((dataUrl) => {
-      setImageURL(dataUrl);
+      setImage({
+        url: dataUrl,
+        width: width,
+        height: height,
+      });
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const downloadImage = () => {
-    if (!imageURL) {
+    if (!image) {
       return;
     }
 
     const link = document.createElement("a");
-    link.href = imageURL;
+    link.href = image.url;
     link.download = "diagram.png";
     link.click();
   };
@@ -84,20 +79,27 @@ export default function ExportImageDialog() {
           </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-4 py-4">
-          <div className="relative aspect-video w-full overflow-hidden rounded-md border">
-            {imageURL ? (
-              <Image
-                src={imageURL}
-                alt="Exported diagram"
-                className="object-cover"
-                fill
-              />
+          <div className="flex aspect-video w-full items-center justify-center overflow-hidden rounded-md border">
+            {image ? (
+              <div
+                className="relative h-full bg-zinc-900"
+                style={{
+                  aspectRatio: `${image.width}/${image.height}`,
+                }}
+              >
+                <Image
+                  src={image.url}
+                  alt="Exported diagram"
+                  fill
+                  className="object-contain"
+                />
+              </div>
             ) : null}
           </div>
 
           <Button
             variant="outline"
-            disabled={!imageURL}
+            disabled={!image}
             onClick={() => downloadImage()}
           >
             Download
