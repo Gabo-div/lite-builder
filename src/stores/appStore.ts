@@ -12,6 +12,7 @@ interface AppStore {
 
   openDiagram: (diagramId: string) => void;
   createDiagram: () => void;
+  addDiagram: (newDiagram: Diagram) => void;
   deleteDiagram: (diagramId: string) => void;
   editDiagramName: (diagramId: string, newName: string) => void;
 
@@ -54,6 +55,15 @@ export const useAppStore = create<AppStore>()(
             },
           }));
         },
+        addDiagram: (newDiagram) => {
+          set((state) => ({
+            diagrams: {
+              ...state.diagrams,
+              [uuidv4()]: newDiagram,
+            },
+          }));
+        },
+
         deleteDiagram: (diagramId) => {
           set((state) => {
             const diagrams = { ...state.diagrams };

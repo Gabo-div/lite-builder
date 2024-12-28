@@ -5,7 +5,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "./ui/button";
-import { File, Image as ImageIcon, Menu } from "lucide-react";
+import { Code, File, Image as ImageIcon, Menu } from "lucide-react";
 import { Dialogs, useDialogStore } from "@/stores/dialogStore";
 import { useCollaborationStore } from "@/hooks/useCollaborationStore";
 
@@ -38,6 +38,10 @@ export default function OptionsDropdown() {
           <DropdownMenuItem onClick={() => setOpenDialog(Dialogs.ExportImage)}>
             <ImageIcon />
             Export as image
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setOpenDialog(Dialogs.ExportJSON)}>
+            <Code />
+            Export as JSON
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

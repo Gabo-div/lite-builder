@@ -6,6 +6,7 @@ export enum Dialogs {
   EditTable,
   CreateTable,
   ShareDiagram,
+  ExportJSON,
 }
 
 interface DialogStore {
