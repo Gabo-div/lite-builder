@@ -11,10 +11,22 @@ import {
   User,
 } from "@/types/Collaboration";
 import { Diagram } from "@/types/Diagram";
-import Peer, { DataConnection } from "peerjs";
+import Peer, { DataConnection, PeerOptions } from "peerjs";
 import { createStore, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { useAppStore } from "./appStore";
+
+const getPeerOptions = async (): Promise<PeerOptions> => {
+  const res = await fetch("/api/ice");
+  const { iceServers } = await res.json();
+
+  return {
+    debug: 3,
+    config: {
+      iceServers,
+    },
+  };
+};
 
 export interface CollaborationStore {
   isGuest: boolean;
@@ -73,9 +85,9 @@ const createCollaborationStoreInternal = (
           };
         }),
       setMode: (newMode) => set({ mode: newMode }),
-      start: () =>
+      start: async () =>
         set({
-          peer: new Peer(),
+          peer: new Peer(await getPeerOptions()),
           state: "connecting",
           user: {
             username: localStorage.getItem("username") || getRandomUsername(),
@@ -113,10 +125,6 @@ const createCollaborationStoreInternal = (
       const connection = peer.connect(props.roomId);
 
       connection.on("open", () => {
-        if (!connection) {
-          return;
-        }
-
         const newUser = {
           username: localStorage.getItem("username") || getRandomUsername(),
           color: getRandomColor(),
@@ -218,10 +226,12 @@ const createCollaborationStoreInternal = (
       },
     );
 
-    store.setState({
-      peer: new Peer(),
-      state: "connecting",
-    });
+    (async () => {
+      store.setState({
+        peer: new Peer(await getPeerOptions()),
+        state: "connecting",
+      });
+    })();
   } else {
     const connections: Map<string, DataConnection> = new Map();
     const timers: Map<string, NodeJS.Timeout> = new Map();
