@@ -15,10 +15,16 @@ import Peer, { DataConnection, PeerOptions } from "peerjs";
 import { createStore, StoreApi } from "zustand";
 import { subscribeWithSelector } from "zustand/middleware";
 import { useAppStore } from "./appStore";
+import { getIceServers } from "@/actions/ice";
 
 const getPeerOptions = async (): Promise<PeerOptions> => {
-  const res = await fetch("/api/ice");
-  const { iceServers } = await res.json();
+  let iceServers: RTCIceServer[] = [];
+
+  try {
+    iceServers = await getIceServers();
+  } catch (error) {
+    console.log({ error });
+  }
 
   return {
     debug: 3,
@@ -85,7 +91,16 @@ const createCollaborationStoreInternal = (
           };
         }),
       setMode: (newMode) => set({ mode: newMode }),
-      start: async () =>
+      start: async () => {
+        if (props.isGuest) {
+          store.setState({
+            peer: new Peer(await getPeerOptions()),
+            state: "connecting",
+          });
+
+          return;
+        }
+
         set({
           peer: new Peer(await getPeerOptions()),
           state: "connecting",
@@ -97,7 +112,8 @@ const createCollaborationStoreInternal = (
               y: 0,
             },
           },
-        }),
+        });
+      },
       stop: () => {
         set((state) => {
           if (state.peer) {
@@ -225,13 +241,6 @@ const createCollaborationStoreInternal = (
         });
       },
     );
-
-    (async () => {
-      store.setState({
-        peer: new Peer(await getPeerOptions()),
-        state: "connecting",
-      });
-    })();
   } else {
     const connections: Map<string, DataConnection> = new Map();
     const timers: Map<string, NodeJS.Timeout> = new Map();

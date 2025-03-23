@@ -1,4 +1,6 @@
-export const GET = async () => {
+"use server";
+
+export const getIceServers = async () => {
   const apiKey = process.env.METERED_API_KEY as string;
 
   const response = await fetch(
@@ -7,5 +9,5 @@ export const GET = async () => {
 
   const iceServers = await response.json();
 
-  return Response.json({ iceServers });
+  return iceServers;
 };

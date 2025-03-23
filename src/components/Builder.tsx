@@ -21,7 +21,7 @@ import CreateTableDialog from "./CreateTableDialog";
 import ShareDiagramDialog from "./ShareDiagramDialog";
 import Cursors from "./Cursors";
 import { useShallow } from "zustand/react/shallow";
-import { MouseEventHandler, useCallback } from "react";
+import { MouseEventHandler, useCallback, useEffect } from "react";
 import { useCollaborationStore } from "@/hooks/useCollaborationStore";
 import ConnectionInfoDialog from "./ConnectionInfoDialog";
 import ExportJSONDialog from "./ExportJSONDialog";
@@ -30,14 +30,21 @@ export default function Builder() {
   const { nodeTypes, nodes, edges, onEdgesChange, onNodesChange } =
     useDiagram();
 
-  const { isGuest, state, mode, setUserCursor } = useCollaborationStore(
+  const { isGuest, state, mode, setUserCursor, start } = useCollaborationStore(
     useShallow((s) => ({
       isGuest: s.isGuest,
       state: s.state,
       mode: s.mode,
       setUserCursor: s.setUserCursor,
+      start: s.start,
     })),
   );
+
+  useEffect(() => {
+    if (isGuest) {
+      start();
+    }
+  }, [isGuest, start]);
 
   const { screenToFlowPosition } = useReactFlow();
 
